@@ -1,0 +1,3 @@
+# Ingestion Tracker
+# This file tracks which documents have been processed
+# DO NOT edit manually - managed by run_ingestion.py

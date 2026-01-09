@@ -1,0 +1,16 @@
+{
+  "raw\\pdf\\FTS-DICT-HB-2022.pdf": {
+    "file_path": "G:\\Ai\\UOV-Chatbot\\uov-ai-assistant\\data\\raw\\pdf\\FTS-DICT-HB-2022.pdf",
+    "file_hash": "e4fe33c4e57173bfebb27e12b4288490",
+    "processed_at": "2026-01-09T17:05:08.710192",
+    "file_size": 4056687,
+    "reason": "new file"
+  },
+  "raw\\mannualy_collected.txt": {
+    "file_path": "G:\\Ai\\UOV-Chatbot\\uov-ai-assistant\\data\\raw\\mannualy_collected.txt",
+    "file_hash": "ddcf3cf3eb13b1d17a536eccd88407bf",
+    "processed_at": "2026-01-09T17:07:44.141327",
+    "file_size": 9296,
+    "reason": "new file"
+  }
+}

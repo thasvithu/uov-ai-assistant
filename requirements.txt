@@ -7,6 +7,8 @@ streamlit==1.31.0
 langchain==0.1.6
 langchain-community==0.0.19
 langchain-groq==0.0.1
+unstructured==0.12.4
+docx2txt==0.8
 
 # Embeddings and ML
 sentence-transformers==2.3.1
@@ -33,7 +35,7 @@ lxml==5.1.0
 python-dotenv==1.0.0
 pydantic==2.6.0
 pydantic-settings==2.1.0
-httpx>=0.24,<0.26
+httpx>=0.26,<0.28
 
 # Development
 ipykernel==6.29.0
