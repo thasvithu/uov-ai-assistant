@@ -108,10 +108,7 @@ class Settings(BaseSettings):
         if v.upper() not in valid_levels:
             raise ValueError(f"log_level must be one of {valid_levels}")
         return v.upper()
-    
-    class Config:
-        """Pydantic config."""
-        case_sensitive = False
+
 
 
 # Global settings instance
