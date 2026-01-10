@@ -79,7 +79,10 @@ app.add_middleware(SlowAPIMiddleware)
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=[
+        "https://*.streamlit.app",  # Streamlit Cloud
+        "http://localhost:8501"      # Local development
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
