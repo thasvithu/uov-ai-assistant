@@ -1,0 +1,47 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches:
+      - prod  # Deploy when pushing to prod branch
+
+jobs:
+  sync-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Push to HF Backend Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git clone https://huggingface.co/spaces/thasvithu/uov-assistant-backend hf-backend
+          cd hf-backend
+          rm -rf *
+          cp -r ../backend_api ../shared ../requirements.txt ../Dockerfile ../.dockerignore .
+          git add .
+          git commit -m "Auto-deploy from GitHub" || echo "No changes"
+          git push https://thasvithu:$HF_TOKEN@huggingface.co/spaces/thasvithu/uov-assistant-backend main
+
+  sync-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Push to HF Frontend Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git clone https://huggingface.co/spaces/thasvithu/uov-assistant-frontend hf-frontend
+          cd hf-frontend
+          rm -rf *
+          cp -r ../streamlit_ui/* .
+          git add .
+          git commit -m "Auto-deploy from GitHub" || echo "No changes"
+          git push https://thasvithu:$HF_TOKEN@huggingface.co/spaces/thasvithu/uov-assistant-frontend main
