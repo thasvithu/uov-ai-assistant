@@ -21,7 +21,11 @@ jobs:
           git clone https://huggingface.co/spaces/thasvithu/uov-assistant-backend hf-backend
           cd hf-backend
           rm -rf *
-          cp -r ../backend_api ../shared ../requirements.txt ../Dockerfile ../.dockerignore .
+          cp -r ../backend_api ../shared .
+          cp ../requirements.txt .
+          cp ../Dockerfile .
+          cp ../.dockerignore .
+          cp ../backend_api/README.md ./README.md
           git add .
           git commit -m "Auto-deploy from GitHub" || echo "No changes"
           git push https://thasvithu:$HF_TOKEN@huggingface.co/spaces/thasvithu/uov-assistant-backend main
@@ -41,7 +45,11 @@ jobs:
           git clone https://huggingface.co/spaces/thasvithu/uov-assistant-frontend hf-frontend
           cd hf-frontend
           rm -rf *
-          cp -r ../streamlit_ui/* .
+          cp ../streamlit_ui/app.py ./app.py
+          cp ../streamlit_ui/Dockerfile .
+          cp ../streamlit_ui/README.md .
+          cp ../requirements.txt .
+          cp -r ../streamlit_ui/.streamlit .streamlit
           git add .
           git commit -m "Auto-deploy from GitHub" || echo "No changes"
           git push https://thasvithu:$HF_TOKEN@huggingface.co/spaces/thasvithu/uov-assistant-frontend main
