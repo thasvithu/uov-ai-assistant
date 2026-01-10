@@ -2,6 +2,8 @@
 FastAPI backend application for UOV AI Assistant.
 
 Provides REST API endpoints for chat, health checks, and feedback.
+
+Developer: Vithusan V. (https://github.com/thasvithu)
 """
 
 from fastapi import FastAPI, HTTPException, Request

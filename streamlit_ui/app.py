@@ -273,6 +273,17 @@ with st.sidebar:
         st.session_state.session_id = str(uuid4())
         st.session_state.messages = []
         st.rerun()
+    
+    st.markdown("---")
+    
+    # Developer info
+    st.markdown("### 👨‍💻 Developer")
+    st.markdown("""
+    **Developed by Vithusan V.**
+    
+    [![GitHub](https://img.shields.io/badge/GitHub-thasvithu-181717?style=flat&logo=github)](https://github.com/thasvithu)
+    [![LinkedIn](https://img.shields.io/badge/LinkedIn-thasvithu-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/thasvithu)
+    """)
 
 # Main chat area
 st.markdown("### 💬 Chat")
