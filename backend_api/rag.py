@@ -55,15 +55,15 @@ Your role is to answer questions about the faculty using ONLY the information pr
 IMPORTANT RULES:
 1. Answer ONLY based on the provided context
 2. If the context doesn't contain enough information, say "I don't have enough information to answer that question based on the available documents."
-3. Always cite your sources using the reference numbers [1], [2], etc. from the context
-4. Be concise and accurate
-5. If you're not sure, say so
-6. Support multiple languages (English, Tamil, Sinhala) - respond in the same language as the question
+3. Be concise, clear, and accurate
+4. If you're not sure, say so
+5. Support multiple languages (English, Tamil, Sinhala) - respond in the same language as the question
+6. Do NOT include citation numbers like [1], [2] in your answer - just provide the information naturally
 
 Context:
 {context}
 
-Remember: Only use information from the context above. Do not make up information."""
+Remember: Only use information from the context above. Do not make up information. Provide answers in a natural, conversational way without citation numbers."""
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_message),
@@ -71,6 +71,69 @@ Remember: Only use information from the context above. Do not make up informatio
         ])
         
         return prompt
+    
+    def _is_identity_question(self, question: str) -> bool:
+        """
+        Check if user is asking about the chatbot itself.
+        
+        Args:
+            question: User question
+            
+        Returns:
+            True if identity question, False otherwise
+        """
+        identity_keywords = [
+            # Who are you variations
+            "who are you", "who r u", "who r you", "who are u",
+            "what are you", "what r u", "what r you", "what are u",
+            
+            # Name questions
+            "your name", "what's your name", "whats your name",
+            "tell me your name", "what is your name",
+            
+            # Purpose questions
+            "what can you do", "what do you do", "what can u do",
+            "what is your purpose", "what's your purpose",
+            "what are your capabilities", "what can you help with",
+            "how can you help", "what can you help me with",
+            
+            # Introduction requests
+            "introduce yourself", "tell me about yourself",
+            "describe yourself", "about you",
+            
+            # Function questions
+            "what is this", "what is this chatbot", "what is this bot",
+            "what does this do", "what's this for", "whats this for",
+            
+            # Multilingual variations (Tamil/Sinhala)
+            "நீங்கள் யார்", "ඔබ කවුද",
+        ]
+        
+        question_lower = question.lower().strip()
+        
+        # Check for exact matches or if keyword is in question
+        return any(keyword in question_lower for keyword in identity_keywords)
+    
+    def _get_identity_response(self) -> str:
+        """
+        Get predefined response for identity questions.
+        
+        Returns:
+            Helpful introduction message
+        """
+        return """I'm the UOV AI Assistant for the Faculty of Technological Studies at the University of Vavuniya.
+
+I can help you with information about:
+
+• Faculty programs and courses
+• Admission requirements and procedures
+• Faculty leadership and staff
+• Facilities and resources
+• Academic calendar and events
+• Department information
+• Vision, mission, and objectives
+
+Feel free to ask me any questions about the Faculty of Technological Studies!"""
     
     def generate_answer(
         self,
@@ -91,6 +154,17 @@ Remember: Only use information from the context above. Do not make up informatio
         """
         logger.info(f"Generating answer for: '{question[:50]}...'")
         
+        # Check if identity question
+        if self._is_identity_question(question):
+            logger.info("Identity question detected, returning predefined response")
+            return {
+                'answer': self._get_identity_response(),
+                'citations': [],
+                'chunks_retrieved': 0,
+                'confidence': 'high',
+                'is_identity_question': True
+            }
+        
         try:
             # Retrieve relevant chunks
             chunks, citations = self.retriever.retrieve_with_citations(
@@ -103,7 +177,7 @@ Remember: Only use information from the context above. Do not make up informatio
             if not chunks:
                 logger.warning("No relevant chunks found")
                 return {
-                    'answer': "I don't have enough information to answer that question based on the available documents. Please try rephrasing your question or ask about topics related to the Faculty of Technological Studies.",
+                    'answer': "I don't have enough information to answer that question.\n\nFor more details, please visit our website: https://fts.vau.ac.lk/",
                     'citations': [],
                     'chunks_retrieved': 0,
                     'confidence': 'low'
