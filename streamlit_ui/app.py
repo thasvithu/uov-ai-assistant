@@ -156,7 +156,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # API configuration
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = "https://thasvithu2025-uov-assistant-backend.hf.space"
 
 # Initialize session state
 if "session_id" not in st.session_state:
