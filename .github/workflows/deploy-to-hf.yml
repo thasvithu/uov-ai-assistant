@@ -24,8 +24,8 @@ jobs:
           cp ../requirements.txt .
           cp ../Dockerfile .
           cp ../.dockerignore .
+          cp ../backend_README.md ./README.md
           cp -r ../backend_api ../shared .
-          cp ../backend_api/README.md ./README.md
           git add .
           git commit -m "Auto-deploy from GitHub" || echo "No changes"
           git push https://thasvithu:$HF_TOKEN@huggingface.co/spaces/thasvithu/uov-assistant-backend main
