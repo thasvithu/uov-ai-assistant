@@ -12,6 +12,7 @@ from langchain.schema import HumanMessage, AIMessage, SystemMessage
 from backend_api.retrieval import get_retriever
 from shared.models import Citation
 from shared.config import settings
+from backend_api.cache import get_cached_response, cache_response
 import logging
 import re
 
@@ -154,7 +155,6 @@ Feel free to ask me any questions about the Faculty of Technological Studies!"""
         """
         logger.info(f"Generating answer for: '{question[:50]}...'")
         
-        # Check if identity question
         if self._is_identity_question(question):
             logger.info("Identity question detected, returning predefined response")
             return {
@@ -164,6 +164,11 @@ Feel free to ask me any questions about the Faculty of Technological Studies!"""
                 'confidence': 'high',
                 'is_identity_question': True
             }
+            
+        # Check cache
+        cached_result = get_cached_response(question)
+        if cached_result:
+            return cached_result
         
         try:
             # Retrieve relevant chunks
@@ -202,13 +207,18 @@ Feel free to ask me any questions about the Faculty of Technological Studies!"""
             
             logger.info(f"Answer generated (confidence: {confidence})")
             
-            return {
+            result = {
                 'answer': answer,
                 'citations': [c.model_dump() for c in citations],
                 'chunks_retrieved': len(chunks),
                 'confidence': confidence,
                 'avg_retrieval_score': round(avg_score, 3)
             }
+            
+            # Cache the result
+            cache_response(question, result)
+            
+            return result
             
         except Exception as e:
             logger.error(f"Error generating answer: {e}")

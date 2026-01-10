@@ -1,5 +1,5 @@
 """
-FastAPI backend application for UoV AI Assistant.
+FastAPI backend application for UOV AI Assistant.
 
 Provides REST API endpoints for chat, health checks, and feedback.
 """
@@ -12,6 +12,10 @@ from typing import AsyncGenerator
 import logging
 import json
 from datetime import datetime
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from backend_api.rag import get_rag_pipeline
 from backend_api.retrieval import get_retriever
@@ -40,7 +44,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown events."""
     # Startup
-    logger.info("Starting UoV AI Assistant API...")
+    logger.info("Starting UOV AI Assistant API...")
     
     # Initialize services (warm up models)
     try:
@@ -55,16 +59,22 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
-    logger.info("Shutting down UoV AI Assistant API...")
+    logger.info("Shutting down UOV AI Assistant API...")
 
 
 # Create FastAPI app
 app = FastAPI(
-    title="UoV AI Assistant API",
+    title="UOV AI Assistant API",
     description="RAG-based chatbot for University of Vavuniya Faculty of Technology",
     version="1.0.0",
     lifespan=lifespan
 )
+
+# Initialize Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Add CORS middleware
 app.add_middleware(
@@ -124,12 +134,14 @@ async def health_check():
 # ============================================
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+@limiter.limit("20/minute")
+async def chat(request: Request, chat_request: ChatRequest):
     """
     Chat endpoint for question answering.
     
     Args:
-        request: ChatRequest with session_id and question
+        request: FastAPI request object (required for rate limiting)
+        chat_request: ChatRequest with session_id and question
         
     Returns:
         ChatResponse with answer and citations
@@ -137,33 +149,33 @@ async def chat(request: ChatRequest):
     start_time = datetime.utcnow()
     
     try:
-        logger.info(f"Chat request - Session: {request.session_id}, Question: {request.question[:50]}...")
+        logger.info(f"Chat request - Session: {chat_request.session_id}, Question: {chat_request.question[:50]}...")
         
         # Get or create session
         db = get_db()
-        session = db.get_session(request.session_id)
+        session = db.get_session(chat_request.session_id)
         
         if not session:
             # Create new session
-            session = ChatSession(session_id=request.session_id)
+            session = ChatSession(session_id=chat_request.session_id)
             db.create_session(session)
-            logger.info(f"Created new session: {request.session_id}")
+            logger.info(f"Created new session: {chat_request.session_id}")
         
         # Save user message
         user_message = ChatMessage(
-            session_id=request.session_id,
+            session_id=chat_request.session_id,
             role=MessageRole.USER,
-            content=request.question
+            content=chat_request.question
         )
         db.save_message(user_message)
         
         # Generate answer using RAG
         rag = get_rag_pipeline()
-        result = rag.generate_answer(request.question)
+        result = rag.generate_answer(chat_request.question)
         
         # Save assistant message
         assistant_message = ChatMessage(
-            session_id=request.session_id,
+            session_id=chat_request.session_id,
             role=MessageRole.ASSISTANT,
             content=result['answer'],
             citations=result.get('citations', [])
@@ -175,7 +187,7 @@ async def chat(request: ChatRequest):
         latency = (end_time - start_time).total_seconds()
         
         db.log_request(
-            session_id=request.session_id,
+            session_id=chat_request.session_id,
             endpoint="/chat",
             latency_ms=int(latency * 1000),
             error=None
@@ -185,7 +197,7 @@ async def chat(request: ChatRequest):
         
         # Return response
         return ChatResponse(
-            session_id=request.session_id,
+            session_id=chat_request.session_id,
             answer=result['answer'],
             citations=result.get('citations', []),
             message_id=assistant_message.message_id

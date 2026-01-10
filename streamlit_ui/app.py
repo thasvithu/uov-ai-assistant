@@ -309,6 +309,9 @@ for msg in st.session_state.messages:
 # Chat input
 st.markdown("---")
 
+# Character limit configuration
+MAX_CHARS = 1000
+
 # Handle quick question
 if "quick_question" in st.session_state:
     user_input = st.session_state.quick_question
@@ -316,7 +319,15 @@ if "quick_question" in st.session_state:
 else:
     user_input = st.chat_input("Ask a question about the Faculty of Technological Studies...")
 
+# Validate input length
 if user_input:
+    input_length = len(user_input)
+    
+    # Check character limit
+    if input_length > MAX_CHARS:
+        st.error(f"Your question has {input_length} characters. Please shorten it to {MAX_CHARS} characters or less (~150-200 words).")
+        st.stop()
+    
     # Check API availability
     if not check_api_health():
         st.error("⚠️ API is not available. Please start the backend server.")
