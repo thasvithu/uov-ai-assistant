@@ -5,7 +5,7 @@ This module loads and validates all environment variables using Pydantic Setting
 """
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing import Optional
 
 
@@ -101,7 +101,9 @@ class Settings(BaseSettings):
         description="Logging level"
     )
     
-    @validator("log_level")
+    
+    @field_validator("log_level")
+    @classmethod
     def validate_log_level(cls, v):
         """Validate log level."""
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
