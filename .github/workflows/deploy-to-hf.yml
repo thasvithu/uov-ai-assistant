@@ -49,7 +49,7 @@ jobs:
           cp ../streamlit_ui/Dockerfile .
           cp ../streamlit_ui/README.md .
           cp ../requirements.txt .
-          cp -r ../streamlit_ui/.streamlit .streamlit
+          [ -d ../streamlit_ui/.streamlit ] && cp -r ../streamlit_ui/.streamlit .streamlit || echo "No .streamlit folder"
           git add .
           git commit -m "Auto-deploy from GitHub" || echo "No changes"
           git push https://thasvithu:$HF_TOKEN@huggingface.co/spaces/thasvithu/uov-assistant-frontend main
