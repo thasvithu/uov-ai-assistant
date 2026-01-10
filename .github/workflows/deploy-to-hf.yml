@@ -21,10 +21,10 @@ jobs:
           git clone https://huggingface.co/spaces/thasvithu/uov-assistant-backend hf-backend
           cd hf-backend
           rm -rf *
-          cp -r ../backend_api ../shared .
           cp ../requirements.txt .
           cp ../Dockerfile .
           cp ../.dockerignore .
+          cp -r ../backend_api ../shared .
           cp ../backend_api/README.md ./README.md
           git add .
           git commit -m "Auto-deploy from GitHub" || echo "No changes"
