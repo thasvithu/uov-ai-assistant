@@ -1,1 +1,9 @@
-{}
+{
+  "raw\\vc.txt": {
+    "file_path": "G:\\Ai\\UOV-Chatbot\\uov-ai-assistant\\data\\raw\\vc.txt",
+    "file_hash": "33f291e0e5283db9c22b68aac424d7e7",
+    "processed_at": "2026-01-11T15:31:06.822296",
+    "file_size": 3110,
+    "reason": "new file"
+  }
+}
