@@ -211,3 +211,6 @@ plan/
 pyproject.toml
 uv.lock
 Experiment/
+
+# Testing tools (not needed in production)
+tests/load_test.py
