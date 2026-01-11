@@ -152,11 +152,25 @@ st.markdown("""
         background-color: #6a0047;
         color: white;
     }
+    
+    /* Reduce sidebar width */
+    [data-testid="stSidebar"] {
+        min-width: 250px !important;
+        max-width: 250px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # API configuration
-API_BASE_URL = "https://thasvithu-uov-assistant-backend.hf.space/"
+import os
+
+# Automatically use local backend in development, production backend in deployment
+if os.getenv("STREAMLIT_RUNTIME_ENV") == "production" or os.getenv("SPACE_ID"):
+    # Running on Hugging Face Spaces or production
+    API_BASE_URL = "https://thasvithu-uov-assistant-backend.hf.space"
+else:
+    # Running locally
+    API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 # Initialize session state
 if "session_id" not in st.session_state:
@@ -170,6 +184,15 @@ if "api_available" not in st.session_state:
 
 
 # Helper functions
+def make_links_clickable(text: str) -> str:
+    """Convert URLs in text to clickable HTML links."""
+    import re
+    # Pattern to match URLs
+    url_pattern = r'(https?://[^\s]+)'
+    # Replace URLs with HTML anchor tags
+    return re.sub(url_pattern, r'<a href="\1" target="_blank" style="color: #6a0047; text-decoration: underline;">\1</a>', text)
+
+
 def check_api_health():
     """Check if the API is available."""
     try:
@@ -257,8 +280,8 @@ with st.sidebar:
     
     **Features:**
     - 💬 Natural language Q&A
-    - 📖 Source citations
-    - 🌐 Multilingual support
+    - ⚡ Instant responses
+    - �️ Secure & private
     - 👍 Feedback system
     """)
     
@@ -277,13 +300,16 @@ with st.sidebar:
     st.markdown("---")
     
     # Developer info
+    st.markdown("---")
     st.markdown("### 👨‍💻 Developer")
-    st.markdown("""
-    **Developed by Vithusan V.**
+    st.markdown("**Vithusan V.**")
     
-    [![GitHub](https://img.shields.io/badge/GitHub-thasvithu-181717?style=flat&logo=github)](https://github.com/thasvithu)
-    [![LinkedIn](https://img.shields.io/badge/LinkedIn-thasvithu-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/thasvithu)
-    """)
+    # Social links in columns
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("[![GitHub](https://img.shields.io/badge/-GitHub-181717?style=for-the-badge&logo=github)](https://github.com/thasvithu)")
+    with col2:
+        st.markdown("[![LinkedIn](https://img.shields.io/badge/-LinkedIn-0077B5?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/thasvithu)")
 
 # Main chat area
 st.markdown("### 💬 Chat")
@@ -298,10 +324,12 @@ for msg in st.session_state.messages:
         </div>
         """, unsafe_allow_html=True)
     else:
+        # Make URLs clickable in assistant messages
+        clickable_content = make_links_clickable(msg["content"])
         st.markdown(f"""
         <div class="assistant-message">
             <strong>🤖 Assistant:</strong><br>
-            {msg["content"]}
+            {clickable_content}
         </div>
         """, unsafe_allow_html=True)
         
