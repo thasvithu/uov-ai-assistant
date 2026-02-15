@@ -21,7 +21,7 @@ jobs:
           git clone https://huggingface.co/spaces/thasvithu/uov-assistant-backend hf-backend
           cd hf-backend
           rm -rf *
-          cp ../requirements.txt .
+          cp ../backend-requirements.txt requirements.txt
           cp ../Dockerfile .
           cp ../.dockerignore .
           cp ../backend_README.md ./README.md
