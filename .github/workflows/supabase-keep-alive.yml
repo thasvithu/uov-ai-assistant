@@ -1,0 +1,41 @@
+name: Supabase Keep-Alive
+
+# Run twice a week (Monday and Thursday at 9:00 AM UTC)
+# This prevents Supabase free tier from auto-pausing after 7 days of inactivity
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+    # Run every Thursday at 9:00 AM UTC
+    - cron: '0 9 * * 4'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Supabase via Backend API
+        run: |
+          echo "Pinging Supabase database to prevent auto-pause..."
+          
+          # Ping the backend API health endpoint
+          # This will trigger a database connection check
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://thasvithu-uov-assistant-backend.hf.space/health)
+          
+          if [ $response -eq 200 ]; then
+            echo "✅ Successfully pinged backend API (Status: $response)"
+            echo "Database connection verified - Supabase will remain active"
+          else
+            echo "⚠️ Backend API returned status: $response"
+            echo "Attempting direct Supabase ping..."
+            
+            # Fallback: Direct ping to Supabase REST API
+            curl -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+              -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}"
+            
+            echo "✅ Direct Supabase ping completed"
+          fi
+          
+          echo "Keep-alive ping completed at $(date)"
