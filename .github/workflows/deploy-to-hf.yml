@@ -48,7 +48,7 @@ jobs:
           cp ../streamlit_ui/app.py ./app.py
           cp ../streamlit_ui/Dockerfile .
           cp ../streamlit_ui/README.md .
-          cp ../requirements.txt .
+          cp ../frontend-requirements.txt requirements.txt
           [ -d ../streamlit_ui/.streamlit ] && cp -r ../streamlit_ui/.streamlit .streamlit || echo "No .streamlit folder"
           git add .
           git commit -m "Auto-deploy from GitHub" || echo "No changes"

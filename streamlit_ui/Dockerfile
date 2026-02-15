@@ -1,10 +1,5 @@
 FROM python:3.11-slim
 
-# Install system dependencies for openai-whisper
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 # Copy requirements
