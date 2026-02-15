@@ -39,6 +39,8 @@ pydantic-settings>=2.4.0
 httpx>=0.26,<0.28
 
 # Voice transcription
+# setuptools is required for building openai-whisper
+setuptools>=65.0.0
 openai-whisper==20231117
 
 # Development
