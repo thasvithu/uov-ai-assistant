@@ -461,20 +461,24 @@ st.markdown("---")
 # Character limit configuration
 MAX_CHARS = 1000
 
-# Voice input (Streamlit mic + Whisper)
-audio_value = st.audio_input(
-    "Record your message",
-    label_visibility="collapsed",
-    key=f"voice_audio_{st.session_state.audio_input_key}"
-)
-
-voice_prompt = None
-if audio_value is not None:
-    with st.spinner("🎤 Transcribing audio..."):
-        try:
-            voice_prompt = transcribe_audio(audio_value)
-        except Exception as e:
-            st.error(f"Audio transcription failed: {str(e)}")
+# Voice input (Streamlit mic + Whisper) - only available locally
+if WHISPER_AVAILABLE:
+    audio_value = st.audio_input(
+        "Record your message",
+        label_visibility="collapsed",
+        key=f"voice_audio_{st.session_state.audio_input_key}"
+    )
+    
+    voice_prompt = None
+    if audio_value is not None:
+        with st.spinner("🎤 Transcribing audio..."):
+            try:
+                voice_prompt = transcribe_audio(audio_value)
+            except Exception as e:
+                st.error(f"Audio transcription failed: {str(e)}")
+else:
+    # Voice not available on Hugging Face deployment
+    voice_prompt = None
 
 # Handle quick question
 if "quick_question" in st.session_state:
