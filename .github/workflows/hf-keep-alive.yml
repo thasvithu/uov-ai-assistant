@@ -1,0 +1,54 @@
+name: Keep Hugging Face Spaces Alive
+
+on:
+  schedule:
+    # Run every 4 hours (6 times per day)
+    - cron: '0 */4 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Backend Space
+        run: |
+          echo "Pinging backend Hugging Face Space..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://thasvithu-uov-assistant-backend.hf.space/health)
+          echo "Backend response code: $response"
+          if [ $response -eq 200 ]; then
+            echo "✅ Backend is alive!"
+          else
+            echo "⚠️ Backend returned status: $response"
+          fi
+
+  ping-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Frontend Space
+        run: |
+          echo "Pinging frontend Hugging Face Space..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://thasvithu-uov-assistant-frontend.hf.space/)
+          echo "Frontend response code: $response"
+          if [ $response -eq 200 ]; then
+            echo "✅ Frontend is alive!"
+          else
+            echo "⚠️ Frontend returned status: $response"
+          fi
+
+  test-chat-endpoint:
+    runs-on: ubuntu-latest
+    needs: ping-backend
+    steps:
+      - name: Test Chat Endpoint
+        run: |
+          echo "Testing chat endpoint to ensure full wake-up..."
+          response=$(curl -s -X POST https://thasvithu-uov-assistant-backend.hf.space/chat \
+            -H "Content-Type: application/json" \
+            -d '{"session_id":"keep-alive-test","question":"What is the vision of the faculty?"}')
+          
+          if echo "$response" | grep -q "answer"; then
+            echo "✅ Chat endpoint is working!"
+          else
+            echo "⚠️ Chat endpoint may have issues"
+            echo "Response: $response"
+          fi
