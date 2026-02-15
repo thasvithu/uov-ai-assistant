@@ -9,10 +9,16 @@ import requests
 from uuid import uuid4, UUID
 from datetime import datetime
 import json
-import whisper
 import tempfile
 import hashlib
 import os
+
+# Optional whisper import (only available locally, not on Hugging Face)
+try:
+    import whisper
+    WHISPER_AVAILABLE = True
+except ImportError:
+    WHISPER_AVAILABLE = False
 
 # Page configuration
 st.set_page_config(
