@@ -1,0 +1,43 @@
+name: Qdrant Keep-Alive
+
+# Run twice a week (Tuesday and Friday at 10:00 AM UTC)
+# This prevents Qdrant free tier from auto-suspending after inactivity
+on:
+  schedule:
+    # Run every Tuesday at 10:00 AM UTC
+    - cron: '0 10 * * 2'
+    # Run every Friday at 10:00 AM UTC
+    - cron: '0 10 * * 5'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  ping-qdrant:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Qdrant Cluster
+        run: |
+          echo "Pinging Qdrant cluster to prevent auto-suspension..."
+          
+          # Get cluster info to register activity
+          response=$(curl -s -w "\n%{http_code}" \
+            -X GET "${{ secrets.QDRANT_URL }}/collections" \
+            -H "api-key: ${{ secrets.QDRANT_API_KEY }}" \
+            -H "Content-Type: application/json")
+          
+          # Extract HTTP status code (last line)
+          http_code=$(echo "$response" | tail -n1)
+          # Extract response body (all but last line)
+          body=$(echo "$response" | sed '$d')
+          
+          if [ $http_code -eq 200 ]; then
+            echo "✅ Successfully pinged Qdrant cluster (Status: $http_code)"
+            echo "Response: $body"
+            echo "Cluster is active and will not be suspended"
+          else
+            echo "⚠️ Qdrant API returned status: $http_code"
+            echo "Response: $body"
+            exit 1
+          fi
+          
+          echo "Keep-alive ping completed at $(date)"
