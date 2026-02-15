@@ -7,3 +7,11 @@ font = "sans serif"
 
 [server]
 headless = true
+
+[client]
+# Force toolbar to be minimal (hides settings menu)
+toolbarMode = "minimal"
+
+[browser]
+# Disable settings gathering
+gatherUsageStats = false

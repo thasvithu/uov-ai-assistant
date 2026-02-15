@@ -9,6 +9,10 @@ import requests
 from uuid import uuid4, UUID
 from datetime import datetime
 import json
+import whisper
+import tempfile
+import hashlib
+import os
 
 # Page configuration
 st.set_page_config(
@@ -158,6 +162,32 @@ st.markdown("""
         min-width: 250px !important;
         max-width: 250px !important;
     }
+    
+    /* Voice input button positioning */
+    [data-testid="stAudioInput"] {
+        position: fixed !important;
+        right: 128px !important;
+        bottom: 34px !important;
+        z-index: 10000 !important;
+        background: none !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
+    /* Make audio input button transparent */
+    [data-testid="stAudioInput"] > div,
+    [data-testid="stAudioInput"] button,
+    [data-testid="stAudioInput"] svg,
+    [data-testid="stAudioInput"] [data-testid="stButton"] {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
+    /* Hide audio input label */
+    [data-testid="stAudioInput"] label {
+        display: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -181,6 +211,16 @@ if "messages" not in st.session_state:
 
 if "api_available" not in st.session_state:
     st.session_state.api_available = None
+
+# Voice input session state
+if 'last_voice_prompt' not in st.session_state:
+    st.session_state.last_voice_prompt = None
+
+if 'last_audio_hash' not in st.session_state:
+    st.session_state.last_audio_hash = None
+
+if 'audio_input_key' not in st.session_state:
+    st.session_state.audio_input_key = 0
 
 
 # Helper functions
@@ -242,6 +282,69 @@ def submit_feedback(message_id: str, rating: str, comment: str = ""):
         return False
 
 
+@st.cache_resource(show_spinner=False)
+def load_whisper_model(model_name: str = "base"):
+    """
+    Load Whisper model once and reuse it.
+    
+    Model sizes:
+    - tiny: ~39M params, fastest, least accurate
+    - base: ~74M params, good balance (RECOMMENDED)
+    - small: ~244M params, better accuracy
+    
+    Returns:
+        Whisper model instance
+    """
+    return whisper.load_model(model_name)
+
+
+def transcribe_audio(audio_value):
+    """
+    Transcribe audio input using Whisper and return text.
+    
+    Args:
+        audio_value: BytesIO object from st.audio_input
+        
+    Returns:
+        Transcribed text or None if duplicate/error
+    """
+    if audio_value is None:
+        return None
+    
+    # Get audio bytes and compute hash
+    audio_bytes = audio_value.getvalue()
+    audio_hash = hashlib.sha256(audio_bytes).hexdigest()
+    
+    # Check if this is a duplicate recording
+    if audio_hash == st.session_state.last_audio_hash:
+        return None  # Already processed this audio
+    
+    # Update hash to mark as processed
+    st.session_state.last_audio_hash = audio_hash
+    
+    # Save audio to temporary file (Whisper requires file path)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+        tmp_file.write(audio_bytes)
+        audio_path = tmp_file.name
+    
+    try:
+        # Load Whisper model (cached)
+        model = load_whisper_model("base")
+        
+        # Transcribe audio
+        result = model.transcribe(audio_path)
+        
+        # Extract text from result
+        return result.get("text", "").strip()
+    
+    finally:
+        # Always clean up temp file
+        try:
+            os.remove(audio_path)
+        except Exception:
+            pass  # Ignore cleanup errors
+
+
 # Header
 st.markdown("""
 <div class="main-header">
@@ -280,8 +383,9 @@ with st.sidebar:
     
     **Features:**
     - 💬 Natural language Q&A
+    - 🎤 Voice input support
     - ⚡ Instant responses
-    - �️ Secure & private
+    - 🔒 Secure & private
     - 👍 Feedback system
     """)
     
@@ -351,12 +455,37 @@ st.markdown("---")
 # Character limit configuration
 MAX_CHARS = 1000
 
+# Voice input (Streamlit mic + Whisper)
+audio_value = st.audio_input(
+    "Record your message",
+    label_visibility="collapsed",
+    key=f"voice_audio_{st.session_state.audio_input_key}"
+)
+
+voice_prompt = None
+if audio_value is not None:
+    with st.spinner("🎤 Transcribing audio..."):
+        try:
+            voice_prompt = transcribe_audio(audio_value)
+        except Exception as e:
+            st.error(f"Audio transcription failed: {str(e)}")
+
 # Handle quick question
 if "quick_question" in st.session_state:
-    user_input = st.session_state.quick_question
+    text_input = st.session_state.quick_question
     del st.session_state.quick_question
 else:
-    user_input = st.chat_input("Ask a question about the Faculty of Technological Studies...")
+    text_input = st.chat_input("Ask a question about the Faculty of Technological Studies...")
+
+# Determine which input to use (voice takes priority)
+user_input = None
+if voice_prompt and voice_prompt != st.session_state.last_voice_prompt:
+    # New voice input
+    st.session_state.last_voice_prompt = voice_prompt
+    user_input = voice_prompt
+elif text_input:
+    # Text input
+    user_input = text_input
 
 # Validate input length
 if user_input:
@@ -391,6 +520,12 @@ if user_input:
                 "citations": response.get("citations", []),
                 "message_id": response.get("message_id")
             })
+    
+    # Clear voice input after processing
+    if user_input == voice_prompt:
+        st.session_state.last_audio_hash = None
+        st.session_state.last_voice_prompt = None
+        st.session_state.audio_input_key += 1  # Force widget reset
     
     # Rerun to display new messages
     st.rerun()
